@@ -10,11 +10,13 @@ class SegmentationLosses(object):
         self.cuda = cuda
 
     def build_loss(self, mode='ce'):
-        """Choices: ['ce' or 'focal']"""
+        """Choices: ['ce' or 'focal' or 'mse']"""
         if mode == 'ce':
             return self.CrossEntropyLoss
         elif mode == 'focal':
             return self.FocalLoss
+        elif mode == 'mse':
+            return self.MSELoss
         else:
             raise NotImplementedError
 
@@ -47,6 +49,20 @@ class SegmentationLosses(object):
 
         if self.batch_average:
             loss /= n
+
+        return loss
+    def MSELoss(self, logit, target):
+        n, c, h, w = logit.size()
+
+        if self.batch_average:
+            criterion = nn.MSELoss(size_average=self.size_average)
+        else:
+            criterion = nn.MSELoss(size_average=self.size_average, reduction='sum')
+            
+        if self.cuda:
+            criterion = criterion.cuda()
+
+        loss = criterion(logit, target)
 
         return loss
 

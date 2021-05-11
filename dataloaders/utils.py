@@ -27,6 +27,9 @@ def decode_segmap(label_mask, dataset, plot=False):
     elif dataset == 'cityscapes':
         n_classes = 19
         label_colours = get_cityscapes_labels()
+    elif dataset == 'aicup':
+        n_classes = 2
+        label_colours = np.array([[0, 0, 0], [128, 64, 128]])
     else:
         raise NotImplementedError
 

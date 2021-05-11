@@ -45,6 +45,7 @@ class Trainer(object):
 
         # Define Criterion
         # whether to use class balanced weights
+        print(os.path.join(Path.db_root_dir(args.dataset), args.dataset+'_classes_weights.npy'))
         if args.use_balanced_weights:
             classes_weights_path = os.path.join(Path.db_root_dir(args.dataset), args.dataset+'_classes_weights.npy')
             if os.path.isfile(classes_weights_path):
@@ -108,9 +109,9 @@ class Trainer(object):
             train_loss += loss.item()
             tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
             self.writer.add_scalar('train/total_loss_iter', loss.item(), i + num_img_tr * epoch)
-
             # Show 10 * 3 inference results each epoch
-            if i % (num_img_tr // 10) == 0:
+            #if i % (num_img_tr // 10) == 0:
+            if i % (num_img_tr//3) == 0:
                 global_step = i + num_img_tr * epoch
                 self.summary.visualize_image(self.writer, self.args.dataset, image, target, output, global_step)
 
@@ -177,13 +178,15 @@ class Trainer(object):
 
 def main():
     parser = argparse.ArgumentParser(description="PyTorch DeeplabV3Plus Training")
+    parser.add_argument('--task', type=str, default='segmentation', choices=['segmentation', 'regression'],
+                        help='Segemntation or 2D regression')
     parser.add_argument('--backbone', type=str, default='resnet',
                         choices=['resnet', 'xception', 'drn', 'mobilenet'],
                         help='backbone name (default: resnet)')
     parser.add_argument('--out-stride', type=int, default=16,
                         help='network output stride (default: 8)')
     parser.add_argument('--dataset', type=str, default='pascal',
-                        choices=['pascal', 'coco', 'cityscapes'],
+                        choices=['pascal', 'coco', 'cityscapes', 'aicup'],
                         help='dataset name (default: pascal)')
     parser.add_argument('--use-sbd', action='store_true', default=True,
                         help='whether to use SBD dataset (default: True)')
@@ -198,7 +201,7 @@ def main():
     parser.add_argument('--freeze-bn', type=bool, default=False,
                         help='whether to freeze bn parameters (default: False)')
     parser.add_argument('--loss-type', type=str, default='ce',
-                        choices=['ce', 'focal'],
+                        choices=['ce', 'focal', 'mse'],
                         help='loss func type (default: ce)')
     # training hyper params
     parser.add_argument('--epochs', type=int, default=None, metavar='N',
@@ -267,6 +270,7 @@ def main():
             'coco': 30,
             'cityscapes': 200,
             'pascal': 50,
+            'aicup': 500,
         }
         args.epochs = epoches[args.dataset.lower()]
 
@@ -281,6 +285,7 @@ def main():
             'coco': 0.1,
             'cityscapes': 0.01,
             'pascal': 0.007,
+            'aicup': 0.01
         }
         args.lr = lrs[args.dataset.lower()] / (4 * len(args.gpu_ids)) * args.batch_size
 
