@@ -42,7 +42,7 @@ def make_data_loader(args, **kwargs):
         train_set = aicup.AICUPDataset(args, split='Train_Dev')
         val_set = aicup.AICUPDataset(args, split='Train_Dev')
         test_set = aicup.AICUPDataset(args, split='test_public')
-        num_class = train_set.NUM_CLASSES
+        num_class = train_set.NUM_CLASSES if args.task=='segmentation' else 1
         train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, **kwargs)
         val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False, **kwargs)
         test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, **kwargs)

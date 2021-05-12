@@ -55,13 +55,14 @@ class SegmentationLosses(object):
         n, c, h, w = logit.size()
 
         if self.batch_average:
-            criterion = nn.MSELoss(size_average=self.size_average)
+            criterion = nn.MSELoss(reduction='mean')
         else:
-            criterion = nn.MSELoss(size_average=self.size_average, reduction='sum')
+            criterion = nn.MSELoss(reduction='sum')
             
         if self.cuda:
             criterion = criterion.cuda()
-
+        if c == 1:
+            logit = logit.view(n, h, w)
         loss = criterion(logit, target)
 
         return loss

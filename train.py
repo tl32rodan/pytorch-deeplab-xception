@@ -3,6 +3,8 @@ import os
 import numpy as np
 from tqdm import tqdm
 
+import torch
+
 from mypath import Path
 from dataloaders import make_data_loader
 from modeling.sync_batchnorm.replicate import patch_replication_callback
@@ -35,7 +37,6 @@ class Trainer(object):
                         output_stride=args.out_stride,
                         sync_bn=args.sync_bn,
                         freeze_bn=args.freeze_bn)
-
         train_params = [{'params': model.get_1x_lr_params(), 'lr': args.lr},
                         {'params': model.get_10x_lr_params(), 'lr': args.lr * 10}]
 
@@ -56,6 +57,7 @@ class Trainer(object):
         else:
             weight = None
         self.criterion = SegmentationLosses(weight=weight, cuda=args.cuda).build_loss(mode=args.loss_type)
+        print(self.criterion)
         self.model, self.optimizer = model, optimizer
         
         # Define Evaluator
@@ -103,7 +105,11 @@ class Trainer(object):
             self.scheduler(self.optimizer, i, epoch, self.best_pred)
             self.optimizer.zero_grad()
             output = self.model(image)
+            # For AICUP dataset, we only need output that being 0/1
+            #if self.args.dataset == 'aicup':
+            #   output = torch.sigmoid(output)
             loss = self.criterion(output, target)
+            #print(loss.item())
             loss.backward()
             self.optimizer.step()
             train_loss += loss.item()
@@ -116,6 +122,7 @@ class Trainer(object):
                 self.summary.visualize_image(self.writer, self.args.dataset, image, target, output, global_step)
 
         self.writer.add_scalar('train/total_loss_epoch', train_loss, epoch)
+        #print(torch.unique(output.detach()))
         print('[Epoch: %d, numImages: %5d]' % (epoch, i * self.args.batch_size + image.data.shape[0]))
         print('Loss: %.3f' % train_loss)
 
@@ -147,6 +154,7 @@ class Trainer(object):
             pred = output.data.cpu().numpy()
             target = target.cpu().numpy()
             pred = np.argmax(pred, axis=1)
+            print(len(pred[pred==0]), len(pred[pred==1]), len(target[target==0]), len(target[target==1]))
             # Add batch sample into evaluator
             self.evaluator.add_batch(target, pred)
 
@@ -285,7 +293,7 @@ def main():
             'coco': 0.1,
             'cityscapes': 0.01,
             'pascal': 0.007,
-            'aicup': 0.01
+            'aicup': 0.1
         }
         args.lr = lrs[args.dataset.lower()] / (4 * len(args.gpu_ids)) * args.batch_size
 

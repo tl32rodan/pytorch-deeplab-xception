@@ -38,9 +38,9 @@ class AICUPDataset(Dataset):
         self.im_ids = []
         self.images = []
         self.labels = []
-        self.sigma = 20 # determine the sigma of confidence map
-        self.range = 5 # determine the range of label points
-        self.dis = 10 # distance constraint
+        self.sigma = 10 # determine the sigma of confidence map
+        self.range = 2 # determine the range of label points
+        self.dis = 20 # distance constraint
 
         if split == 'Train_Dev':
             for img in os.listdir(os.path.join(base_dir, split, 'training')):
@@ -95,9 +95,7 @@ class AICUPDataset(Dataset):
                 #    for j in range(-self.range, self.range):
                 #        if x+i >= _label.shape[0] or y+j >= _label.shape[1] or x+i<0 or y+j<0 or (i**2+j**2)**0.5 > self.dis:
                 #            continue
-                #        _label[x+i, y+j, 0] = 1
-                #        _label[x+i, y+j, 1] = 1
-                #        _label[x+i, y+j, 2] = 1
+                #        _label[x+i, y+j] = 1
         elif self.task == 'regression':
             for (x, y) in _points:
                 for i in range(-self.range, self.range):
