@@ -84,7 +84,6 @@ class RandomGaussianBlur(object):
         return {'image': img,
                 'label': mask}
 
-
 class RandomScaleCrop(object):
     def __init__(self, base_size, crop_size, fill=0):
         self.base_size = base_size

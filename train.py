@@ -64,6 +64,7 @@ class Trainer(object):
         self.evaluator = Evaluator(self.nclass)
         # Define lr scheduler
         self.scheduler = LR_Scheduler(args.lr_scheduler, args.lr,
+                                            #args.epochs, len(self.train_loader))
                                             args.epochs, len(self.train_loader))
 
         # Using cuda
@@ -96,24 +97,27 @@ class Trainer(object):
     def training(self, epoch):
         train_loss = 0.0
         self.model.train()
-        tbar = tqdm(self.train_loader)
+        #tbar = tqdm(self.train_loader)
         num_img_tr = len(self.train_loader)
-        for i, sample in enumerate(tbar):
+        #for i, sample in enumerate(tbar):
+        for i, sample in enumerate(self.train_loader):
             image, target = sample['image'], sample['label']
             if self.args.cuda:
                 image, target = image.cuda(), target.cuda()
             self.scheduler(self.optimizer, i, epoch, self.best_pred)
             self.optimizer.zero_grad()
             output = self.model(image)
+            #print(torch.unique(output.detach()))
+            #print(output.shape, target.shape)
             # For AICUP dataset, we only need output that being 0/1
-            #if self.args.dataset == 'aicup':
-            #   output = torch.sigmoid(output)
+            if self.args.dataset == 'aicup' and self.args.task=='regression':
+               output = torch.sigmoid(output)
             loss = self.criterion(output, target)
             #print(loss.item())
             loss.backward()
             self.optimizer.step()
             train_loss += loss.item()
-            tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
+            #tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
             self.writer.add_scalar('train/total_loss_iter', loss.item(), i + num_img_tr * epoch)
             # Show 10 * 3 inference results each epoch
             #if i % (num_img_tr // 10) == 0:
@@ -123,8 +127,7 @@ class Trainer(object):
 
         self.writer.add_scalar('train/total_loss_epoch', train_loss, epoch)
         #print(torch.unique(output.detach()))
-        print('[Epoch: %d, numImages: %5d]' % (epoch, i * self.args.batch_size + image.data.shape[0]))
-        print('Loss: %.3f' % train_loss)
+        print('[Epoch: %d, numImages: %5d], Loss: %.3f' % (epoch, i * self.args.batch_size + image.data.shape[0], train_loss))
 
         if self.args.no_val:
             # save checkpoint every epoch
@@ -154,7 +157,7 @@ class Trainer(object):
             pred = output.data.cpu().numpy()
             target = target.cpu().numpy()
             pred = np.argmax(pred, axis=1)
-            print(len(pred[pred==0]), len(pred[pred==1]), len(target[target==0]), len(target[target==1]))
+            #print(len(pred[pred==0]), len(pred[pred==1]), len(target[target==0]), len(target[target==1]))
             # Add batch sample into evaluator
             self.evaluator.add_batch(target, pred)
 
@@ -173,7 +176,8 @@ class Trainer(object):
         print("Acc:{}, Acc_class:{}, mIoU:{}, fwIoU: {}".format(Acc, Acc_class, mIoU, FWIoU))
         print('Loss: %.3f' % test_loss)
 
-        new_pred = mIoU
+        #new_pred = mIoU
+        new_pred = Acc_class
         if new_pred > self.best_pred:
             is_best = True
             self.best_pred = new_pred
