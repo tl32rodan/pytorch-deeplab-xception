@@ -119,7 +119,32 @@ class RandomScaleCrop(object):
 
         return {'image': img,
                 'label': mask}
+    
+class FixScaleRandomCrop(object):
+    def __init__(self, crop_size):
+        self.crop_size = crop_size
 
+    def __call__(self, sample):
+        img = sample['image']
+        mask = sample['label']
+#         w, h = img.size
+#         if w > h:
+#             oh = self.crop_size
+#             ow = int(1.0 * w * oh / h)
+#         else:
+#             ow = self.crop_size
+#             oh = int(1.0 * h * ow / w)
+#         img = img.resize((ow, oh), Image.BILINEAR)
+#         mask = mask.resize((ow, oh), Image.NEAREST)
+        # random crop
+        w, h = img.size
+        x1 = random.randint(0, w - self.crop_size)
+        y1 = random.randint(0, h - self.crop_size)
+        img = img.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
+        mask = mask.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
+
+        return {'image': img,
+                'label': mask}
 
 class FixScaleCrop(object):
     def __init__(self, crop_size):

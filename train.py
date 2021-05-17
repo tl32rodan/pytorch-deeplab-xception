@@ -111,7 +111,7 @@ class Trainer(object):
             #print(output.shape, target.shape)
             # For AICUP dataset, we only need output that being 0/1
             if self.args.dataset == 'aicup' and self.args.task=='regression':
-               output = torch.sigmoid(output)
+                output = torch.sigmoid(output)
             loss = self.criterion(output, target)
             #print(loss.item())
             loss.backward()
@@ -220,10 +220,10 @@ def main():
                         help='number of epochs to train (default: auto)')
     parser.add_argument('--start_epoch', type=int, default=0,
                         metavar='N', help='start epochs (default:0)')
-    parser.add_argument('--batch-size', type=int, default=None,
+    parser.add_argument('--batch_size', type=int, default=None,
                         metavar='N', help='input batch size for \
                                 training (default: auto)')
-    parser.add_argument('--test-batch-size', type=int, default=None,
+    parser.add_argument('--test_batch_size', type=int, default=None,
                         metavar='N', help='input batch size for \
                                 testing (default: auto)')
     parser.add_argument('--use-balanced-weights', action='store_true', default=False,

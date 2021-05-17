@@ -107,7 +107,8 @@ class AICUPDataset(Dataset):
         else:
             raise ValueError
 
-        _label = Image.fromarray(np.uint8(_label*255))
+        
+        _label = Image.fromarray(np.uint8(np.transpose(_label)*255))
         return _img, _label
 
     def transform_tr(self, sample):
